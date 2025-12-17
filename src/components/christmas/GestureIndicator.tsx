@@ -1,10 +1,12 @@
 import { GestureType } from '@/types/christmas';
-import { Hand, Grab, Circle, MousePointer } from 'lucide-react';
+import { Hand, Grab, Circle, MousePointer, Camera, CameraOff } from 'lucide-react';
 
 interface GestureIndicatorProps {
   gesture: GestureType;
   isTracking: boolean;
   usingMouse: boolean;
+  gestureEnabled: boolean;
+  onToggleGesture: () => void;
 }
 
 const gestureIcons: Record<GestureType, React.ReactNode> = {
@@ -23,9 +25,40 @@ const gestureLabels: Record<GestureType, string> = {
   pointing: 'Pointing',
 };
 
-export function GestureIndicator({ gesture, isTracking, usingMouse }: GestureIndicatorProps) {
+export function GestureIndicator({ 
+  gesture, 
+  isTracking, 
+  usingMouse, 
+  gestureEnabled, 
+  onToggleGesture 
+}: GestureIndicatorProps) {
   return (
-    <div className="absolute top-4 left-4 z-10">
+    <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+      {/* Gesture Toggle Button */}
+      <button
+        onClick={onToggleGesture}
+        className={`
+          glass-gold rounded-xl px-4 py-3 flex items-center gap-3 
+          text-foreground transition-all duration-300
+          hover:scale-105 active:scale-95
+          ${gestureEnabled ? 'ring-2 ring-christmas-green/50' : ''}
+        `}
+      >
+        <div className={`
+          p-2 rounded-lg transition-colors duration-300
+          ${gestureEnabled 
+            ? 'bg-christmas-green/30 text-christmas-snow' 
+            : 'bg-muted/50 text-muted-foreground'
+          }
+        `}>
+          {gestureEnabled ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
+        </div>
+        <span className="text-sm font-medium">
+          {gestureEnabled ? '手势控制已启用' : '启用手势控制'}
+        </span>
+      </button>
+
+      {/* Gesture Status */}
       <div className="glass-gold rounded-xl px-4 py-3 flex items-center gap-3 text-foreground">
         <div className={`
           p-2 rounded-lg 
@@ -40,10 +73,10 @@ export function GestureIndicator({ gesture, isTracking, usingMouse }: GestureInd
         
         <div className="flex flex-col">
           <span className="text-xs text-muted-foreground uppercase tracking-wider">
-            {usingMouse ? 'Mouse Control' : isTracking ? 'Hand Detected' : 'No Hand'}
+            {usingMouse ? '鼠标控制' : isTracking ? '检测到手势' : '未检测到手势'}
           </span>
           <span className="text-sm font-medium">
-            {usingMouse ? 'Double-click to toggle' : gestureLabels[gesture]}
+            {usingMouse ? '双击切换模式' : gestureLabels[gesture]}
           </span>
         </div>
         

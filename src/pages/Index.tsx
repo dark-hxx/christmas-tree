@@ -14,7 +14,7 @@ const Index = () => {
   const [photos, setPhotos] = useState<string[]>([]);
   const [focusedPhotoIndex, setFocusedPhotoIndex] = useState<number | null>(null);
   const [orbitRotation, setOrbitRotation] = useState({ x: 0, y: 0 });
-  const [useCamera, setUseCamera] = useState(true);
+  const [gestureEnabled, setGestureEnabled] = useState(false); // Start disabled, user can enable
   const [showInstructions, setShowInstructions] = useState(true);
 
   // Audio hook
@@ -49,7 +49,7 @@ const Index = () => {
 
   // Hand gesture hook
   const handGesture = useHandGesture({
-    enabled: useCamera,
+    enabled: gestureEnabled,
     onGestureChange: handleGestureChange,
   });
 
@@ -93,6 +93,8 @@ const Index = () => {
         gesture={handGesture.gesture}
         isTracking={handGesture.isTracking}
         usingMouse={!handGesture.isTracking}
+        gestureEnabled={gestureEnabled}
+        onToggleGesture={() => setGestureEnabled(!gestureEnabled)}
       />
 
       <AudioControl
