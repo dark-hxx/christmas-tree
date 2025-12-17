@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-// Royalty-free Christmas music from Pixabay
-const CHRISTMAS_MUSIC_URL = 'https://cdn.pixabay.com/audio/2022/12/13/audio_4b59264731.mp3';
+// Custom Christmas music
+const CHRISTMAS_MUSIC_URL = '/audio/christmas-music.mp3';
 
 export function useChristmasAudio() {
   const [isPlaying, setIsPlaying] = useState(false);
