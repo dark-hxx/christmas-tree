@@ -202,19 +202,19 @@ function PhotoCardMesh({
   return (
     <group ref={meshRef} position={treePosition} scale={[0.5, 0.5, 1]}>
       {/* 拍立得白色卡片背景 */}
-      <mesh geometry={cardGeometry}>
+      <mesh geometry={cardGeometry} renderOrder={1}>
         <meshBasicMaterial 
-          color="#f5f5f0"
+          color="#d8d8d0"
           side={THREE.DoubleSide}
-          toneMapped={false}
+          toneMapped={true}
         />
       </mesh>
       {/* 照片 */}
-      <mesh geometry={photoGeometry} position={[0, photoOffsetY, 0.001]}>
+      <mesh geometry={photoGeometry} position={[0, photoOffsetY, 0.001]} renderOrder={2}>
         <meshBasicMaterial 
           map={texture} 
           side={THREE.DoubleSide}
-          toneMapped={false}
+          toneMapped={true}
         />
       </mesh>
     </group>
