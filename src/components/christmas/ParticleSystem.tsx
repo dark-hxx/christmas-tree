@@ -397,8 +397,8 @@ export function GemOrnaments({ state }: { state: TreeState }) {
         <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial 
           color="#ffffff"
-          emissive="#ffffff"
-          emissiveIntensity={1.2}
+          emissive="#e8e8f0"
+          emissiveIntensity={0.5}
           metalness={0.95} 
           roughness={0.05}
         />
@@ -407,8 +407,8 @@ export function GemOrnaments({ state }: { state: TreeState }) {
         <icosahedronGeometry args={[1, 0]} />
         <meshStandardMaterial 
           color="#ffffff"
-          emissive="#ffffff"
-          emissiveIntensity={1.2}
+          emissive="#e8e8f0"
+          emissiveIntensity={0.5}
           metalness={0.95} 
           roughness={0.05}
         />
