@@ -148,20 +148,25 @@ export function useHandGesture({ enabled, onGestureChange }: UseHandGestureOptio
           });
         };
 
-        // Use jsdelivr as primary source - most reliable for MediaPipe model files
-        // China CDNs don't have proper MediaPipe WASM/tflite files
+        // CDN sources with China-friendly options first
+        // fastly.jsdelivr.net is often more accessible in China
         const cdnSources = [
+          'https://fastly.jsdelivr.net/npm/@mediapipe/hands/hands.js',
           'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js',
           'https://unpkg.com/@mediapipe/hands/hands.js',
         ];
         
         let loaded = false;
+        let successfulCdn = 'cdn.jsdelivr.net';
         for (const src of cdnSources) {
           if (!mounted) return;
           try {
             console.log('[Gesture] Trying CDN:', src);
-            await loadScript(src, 15000); // Longer timeout for slower connections
+            await loadScript(src, 12000);
             loaded = true;
+            // Extract CDN host for model files
+            const match = src.match(/https:\/\/([^/]+)/);
+            if (match) successfulCdn = match[1];
             console.log('[Gesture] Successfully loaded from:', src);
             break;
           } catch (e) {
@@ -170,8 +175,11 @@ export function useHandGesture({ enabled, onGestureChange }: UseHandGestureOptio
         }
 
         if (!loaded) {
-          throw new Error('无法加载手势识别库，请检查网络连接');
+          throw new Error('无法加载手势识别库，请检查网络连接或使用VPN');
         }
+        
+        // Store successful CDN for model files
+        (window as any).__mediapipeCdn = successfulCdn;
 
         if (!mounted) return;
 
@@ -263,8 +271,10 @@ export function useHandGesture({ enabled, onGestureChange }: UseHandGestureOptio
           throw new Error('Video stream has no dimensions');
         }
 
-        // Initialize Hands - use jsdelivr as primary (most reliable for mediapipe)
-        const modelCdnBase = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands';
+        // Use the same CDN that successfully loaded the script
+        const cdnHost = (window as any).__mediapipeCdn || 'cdn.jsdelivr.net';
+        const modelCdnBase = `https://${cdnHost}/npm/@mediapipe/hands`;
+        console.log('[Gesture] Using CDN for model files:', modelCdnBase);
         
         const hands = new Hands({
           locateFile: (file: string) => {
