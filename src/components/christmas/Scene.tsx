@@ -28,8 +28,9 @@ function CameraController({
   const { camera } = useThree();
   const targetRef = useRef(new THREE.Vector3(0, 0, 0));
   const positionRef = useRef(new THREE.Vector3(0, 2, 12));
+  const velocityRef = useRef(new THREE.Vector3(0, 0, 0));
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     // Base camera distance
     const baseDistance = state === 'tree' ? 12 : 18;
     
@@ -47,10 +48,12 @@ function CameraController({
     
     const targetZ = Math.cos(orbitRotation.y) * baseDistance;
     
-    // Smooth camera movement
-    positionRef.current.x += (targetX - positionRef.current.x) * 0.02;
-    positionRef.current.y += (targetY - positionRef.current.y) * 0.02;
-    positionRef.current.z += (targetZ - positionRef.current.z) * 0.02;
+    // Frame-rate independent smooth camera movement using exponential decay
+    const smoothFactor = 1 - Math.exp(-4 * delta); // ~4 is the speed factor
+    
+    positionRef.current.x += (targetX - positionRef.current.x) * smoothFactor;
+    positionRef.current.y += (targetY - positionRef.current.y) * smoothFactor;
+    positionRef.current.z += (targetZ - positionRef.current.z) * smoothFactor;
     
     camera.position.copy(positionRef.current);
     camera.lookAt(targetRef.current);

@@ -77,11 +77,13 @@ function generateRibbonPosition(index: number, total: number): [number, number, 
   ];
 }
 
-// Main tree particles (green sparkles/snow effect)
+// Main tree particles (green sparkles/snow effect) - OPTIMIZED
 export function ParticleSystem({ state, particleCount = 4000 }: ParticleSystemProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const timeRef = useRef(0);
+  const colorsSetRef = useRef(false);
+  const transitionRef = useRef({ progress: 0, fromState: 'tree' as TreeState });
   
   const particleData = useMemo(() => {
     return Array.from({ length: particleCount }, (_, i) => {
@@ -93,252 +95,267 @@ export function ParticleSystem({ state, particleCount = 4000 }: ParticleSystemPr
       let color: THREE.Color;
       
       if (colorRand < 0.85) {
-        // Rich Christmas GREEN - varying shades
         const hue = 0.33 + Math.random() * 0.05;
         const saturation = 0.7 + Math.random() * 0.3;
         const lightness = 0.25 + Math.random() * 0.2;
         color = new THREE.Color().setHSL(hue, saturation, lightness);
       } else {
-        // White/silver sparkles
         color = new THREE.Color().setHSL(0, 0, 0.9 + Math.random() * 0.1);
       }
       
       return {
         treePosition: treePos,
         galaxyPosition: galaxyPos,
-        currentPosition: [...treePos] as [number, number, number],
         color,
         scale: 0.015 + Math.random() * 0.025,
         phase: Math.random() * Math.PI * 2,
         speed: 0.5 + Math.random() * 0.5,
+        // Pre-calculated animation delay for staggered effect
+        delay: Math.random(),
       };
     });
   }, [particleCount]);
 
-  const positionsRef = useRef(particleData.map(p => [...p.treePosition]));
-
+  // Use single GSAP tween for overall transition instead of per-particle
   useEffect(() => {
-    const targetPositions = state === 'tree' 
-      ? particleData.map(p => p.treePosition)
-      : particleData.map(p => p.galaxyPosition);
-
-    positionsRef.current.forEach((pos, i) => {
-      gsap.to(pos, {
-        0: targetPositions[i][0],
-        1: targetPositions[i][1],
-        2: targetPositions[i][2],
-        duration: 1.5 + Math.random() * 0.5,
-        ease: state === 'tree' ? 'power2.inOut' : 'power2.out',
-        delay: Math.random() * 0.3,
-      });
+    transitionRef.current.fromState = transitionRef.current.progress > 0.5 ? 'galaxy' : 'tree';
+    
+    gsap.to(transitionRef.current, {
+      progress: state === 'tree' ? 0 : 1,
+      duration: 1.8,
+      ease: 'power2.inOut',
     });
-  }, [state, particleData]);
+  }, [state]);
+
+  // Set colors once on mount
+  useEffect(() => {
+    if (!meshRef.current || colorsSetRef.current) return;
+    
+    particleData.forEach((particle, i) => {
+      meshRef.current!.setColorAt(i, particle.color);
+    });
+    if (meshRef.current.instanceColor) {
+      meshRef.current.instanceColor.needsUpdate = true;
+    }
+    colorsSetRef.current = true;
+  }, [particleData]);
 
   useFrame((_, delta) => {
     if (!meshRef.current) return;
     
     timeRef.current += delta;
+    const progress = transitionRef.current.progress;
     
-    particleData.forEach((particle, i) => {
-      const pos = positionsRef.current[i];
+    // Process particles in batches for better performance
+    for (let i = 0; i < particleCount; i++) {
+      const particle = particleData[i];
       
-      const breathe = Math.sin(timeRef.current * particle.speed + particle.phase) * 0.03;
+      // Staggered lerp based on particle delay
+      const staggeredProgress = Math.max(0, Math.min(1, 
+        progress * 1.5 - particle.delay * 0.5
+      ));
+      const smoothProgress = staggeredProgress * staggeredProgress * (3 - 2 * staggeredProgress); // smoothstep
       
-      dummy.position.set(pos[0], pos[1] + breathe, pos[2]);
-      dummy.rotation.y = timeRef.current * 0.5 + particle.phase;
+      // Interpolate position
+      const x = particle.treePosition[0] + (particle.galaxyPosition[0] - particle.treePosition[0]) * smoothProgress;
+      const y = particle.treePosition[1] + (particle.galaxyPosition[1] - particle.treePosition[1]) * smoothProgress;
+      const z = particle.treePosition[2] + (particle.galaxyPosition[2] - particle.treePosition[2]) * smoothProgress;
       
-      const scalePulse = 1 + Math.sin(timeRef.current * 3 + particle.phase) * 0.15;
+      // Subtle breathing animation
+      const breathe = Math.sin(timeRef.current * particle.speed + particle.phase) * 0.02;
+      
+      dummy.position.set(x, y + breathe, z);
+      dummy.rotation.y = timeRef.current * 0.3 + particle.phase;
+      
+      const scalePulse = 1 + Math.sin(timeRef.current * 2 + particle.phase) * 0.1;
       dummy.scale.setScalar(particle.scale * scalePulse);
       
       dummy.updateMatrix();
-      meshRef.current!.setMatrixAt(i, dummy.matrix);
-      meshRef.current!.setColorAt(i, particle.color);
-    });
+      meshRef.current.setMatrixAt(i, dummy.matrix);
+    }
     
     meshRef.current.instanceMatrix.needsUpdate = true;
-    if (meshRef.current.instanceColor) {
-      meshRef.current.instanceColor.needsUpdate = true;
-    }
   });
 
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, particleCount]}>
-      <sphereGeometry args={[1, 8, 8]} />
+      <sphereGeometry args={[1, 4, 4]} />
       <meshBasicMaterial toneMapped={false} />
     </instancedMesh>
   );
 }
 
-// Colorful ornament balls (red, gold, etc.)
+// Colorful ornament balls (red, gold, etc.) - OPTIMIZED
 export function OrnamentBalls({ state }: { state: TreeState }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
-  const timeRef = useRef(0);
+  const colorsSetRef = useRef(false);
+  const transitionRef = useRef({ progress: 0 });
   const ornamentCount = 35;
   
   const ornamentData = useMemo(() => {
     const colors = [
-      new THREE.Color('#C41E3A'), // Red
-      new THREE.Color('#8B0000'), // Dark red
-      new THREE.Color('#FFD700'), // Gold
-      new THREE.Color('#FF6347'), // Tomato red
-      new THREE.Color('#DC143C'), // Crimson
-      new THREE.Color('#B22222'), // Firebrick
-      new THREE.Color('#DAA520'), // Goldenrod
-      new THREE.Color('#FF4500'), // Orange red
+      new THREE.Color('#C41E3A'),
+      new THREE.Color('#8B0000'),
+      new THREE.Color('#FFD700'),
+      new THREE.Color('#FF6347'),
+      new THREE.Color('#DC143C'),
+      new THREE.Color('#B22222'),
+      new THREE.Color('#DAA520'),
+      new THREE.Color('#FF4500'),
     ];
     
-    return Array.from({ length: ornamentCount }, (_, i) => {
-      const treePos = generateOrnamentPosition(i, ornamentCount);
-      const galaxyPos = generateGalaxyPosition();
-      
-      return {
-        treePosition: treePos,
-        galaxyPosition: galaxyPos,
-        color: colors[i % colors.length],
-        scale: 0.1 + Math.random() * 0.08,
-        phase: Math.random() * Math.PI * 2,
-      };
-    });
+    return Array.from({ length: ornamentCount }, (_, i) => ({
+      treePosition: generateOrnamentPosition(i, ornamentCount),
+      galaxyPosition: generateGalaxyPosition(),
+      color: colors[i % colors.length],
+      scale: 0.1 + Math.random() * 0.08,
+      delay: Math.random(),
+    }));
   }, []);
 
-  const positionsRef = useRef(ornamentData.map(p => [...p.treePosition]));
+  useEffect(() => {
+    gsap.to(transitionRef.current, {
+      progress: state === 'tree' ? 0 : 1,
+      duration: 1.5,
+      ease: 'power2.inOut',
+    });
+  }, [state]);
 
   useEffect(() => {
-    const targetPositions = state === 'tree' 
-      ? ornamentData.map(p => p.treePosition)
-      : ornamentData.map(p => p.galaxyPosition);
+    if (!meshRef.current || colorsSetRef.current) return;
+    ornamentData.forEach((o, i) => meshRef.current!.setColorAt(i, o.color));
+    if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
+    colorsSetRef.current = true;
+  }, [ornamentData]);
 
-    positionsRef.current.forEach((pos, i) => {
-      gsap.to(pos, {
-        0: targetPositions[i][0],
-        1: targetPositions[i][1],
-        2: targetPositions[i][2],
-        duration: 1.2 + Math.random() * 0.4,
-        ease: 'power2.inOut',
-        delay: Math.random() * 0.2,
-      });
-    });
-  }, [state, ornamentData]);
-
-  useFrame((_, delta) => {
+  useFrame(() => {
     if (!meshRef.current) return;
     
-    timeRef.current += delta;
+    const progress = transitionRef.current.progress;
     
     ornamentData.forEach((ornament, i) => {
-      const pos = positionsRef.current[i];
-      dummy.position.set(pos[0], pos[1], pos[2]);
+      const p = Math.max(0, Math.min(1, progress * 1.3 - ornament.delay * 0.3));
+      const smooth = p * p * (3 - 2 * p);
+      
+      const x = ornament.treePosition[0] + (ornament.galaxyPosition[0] - ornament.treePosition[0]) * smooth;
+      const y = ornament.treePosition[1] + (ornament.galaxyPosition[1] - ornament.treePosition[1]) * smooth;
+      const z = ornament.treePosition[2] + (ornament.galaxyPosition[2] - ornament.treePosition[2]) * smooth;
+      
+      dummy.position.set(x, y, z);
       dummy.scale.setScalar(ornament.scale);
       dummy.updateMatrix();
       meshRef.current!.setMatrixAt(i, dummy.matrix);
-      meshRef.current!.setColorAt(i, ornament.color);
     });
     
     meshRef.current.instanceMatrix.needsUpdate = true;
-    if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
   });
 
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, ornamentCount]}>
-      <sphereGeometry args={[1, 16, 16]} />
+      <sphereGeometry args={[1, 12, 12]} />
       <meshStandardMaterial metalness={0.8} roughness={0.2} envMapIntensity={1} />
     </instancedMesh>
   );
 }
 
-// Gem-like cubes and icosahedrons (high reflective)
+// Gem-like cubes and icosahedrons (high reflective) - OPTIMIZED
 export function GemOrnaments({ state }: { state: TreeState }) {
   const cubeRef = useRef<THREE.InstancedMesh>(null);
   const icoRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const timeRef = useRef(0);
+  const colorsSetRef = useRef({ cube: false, ico: false });
+  const transitionRef = useRef({ progress: 0 });
   const cubeCount = 25;
   const icoCount = 20;
   
   const cubeData = useMemo(() => {
     return Array.from({ length: cubeCount }, (_, i) => {
-      const treePos = generateOrnamentPosition(i, cubeCount);
-      const galaxyPos = generateGalaxyPosition();
-      // White/light purple colors for gem effect
-      const hue = Math.random() > 0.5 ? 0.75 + Math.random() * 0.1 : 0; // Purple or white
-      const color = new THREE.Color().setHSL(hue, hue > 0 ? 0.4 : 0, 0.85 + Math.random() * 0.15);
-      
+      const hue = Math.random() > 0.5 ? 0.75 + Math.random() * 0.1 : 0;
       return {
-        treePosition: treePos,
-        galaxyPosition: galaxyPos,
-        color,
+        treePosition: generateOrnamentPosition(i, cubeCount),
+        galaxyPosition: generateGalaxyPosition(),
+        color: new THREE.Color().setHSL(hue, hue > 0 ? 0.4 : 0, 0.85 + Math.random() * 0.15),
         scale: 0.08 + Math.random() * 0.06,
-        phase: Math.random() * Math.PI * 2,
         rotSpeed: 0.3 + Math.random() * 0.5,
+        delay: Math.random(),
       };
     });
   }, []);
   
   const icoData = useMemo(() => {
     return Array.from({ length: icoCount }, (_, i) => {
-      const treePos = generateOrnamentPosition(i + cubeCount, icoCount + cubeCount);
-      const galaxyPos = generateGalaxyPosition();
       const hue = Math.random() > 0.5 ? 0.78 + Math.random() * 0.05 : 0;
-      const color = new THREE.Color().setHSL(hue, hue > 0 ? 0.5 : 0, 0.8 + Math.random() * 0.2);
-      
       return {
-        treePosition: treePos,
-        galaxyPosition: galaxyPos,
-        color,
+        treePosition: generateOrnamentPosition(i + cubeCount, icoCount + cubeCount),
+        galaxyPosition: generateGalaxyPosition(),
+        color: new THREE.Color().setHSL(hue, hue > 0 ? 0.5 : 0, 0.8 + Math.random() * 0.2),
         scale: 0.1 + Math.random() * 0.08,
-        phase: Math.random() * Math.PI * 2,
         rotSpeed: 0.2 + Math.random() * 0.4,
+        delay: Math.random(),
       };
     });
   }, []);
 
-  const cubePositionsRef = useRef(cubeData.map(p => [...p.treePosition]));
-  const icoPositionsRef = useRef(icoData.map(p => [...p.treePosition]));
-
   useEffect(() => {
-    const cubeTgt = state === 'tree' ? cubeData.map(p => p.treePosition) : cubeData.map(p => p.galaxyPosition);
-    const icoTgt = state === 'tree' ? icoData.map(p => p.treePosition) : icoData.map(p => p.galaxyPosition);
+    gsap.to(transitionRef.current, { progress: state === 'tree' ? 0 : 1, duration: 1.5, ease: 'power2.inOut' });
+  }, [state]);
 
-    cubePositionsRef.current.forEach((pos, i) => {
-      gsap.to(pos, { 0: cubeTgt[i][0], 1: cubeTgt[i][1], 2: cubeTgt[i][2], duration: 1.2, ease: 'power2.inOut', delay: Math.random() * 0.2 });
-    });
-    icoPositionsRef.current.forEach((pos, i) => {
-      gsap.to(pos, { 0: icoTgt[i][0], 1: icoTgt[i][1], 2: icoTgt[i][2], duration: 1.2, ease: 'power2.inOut', delay: Math.random() * 0.2 });
-    });
-  }, [state, cubeData, icoData]);
+  // Set colors once
+  useEffect(() => {
+    if (cubeRef.current && !colorsSetRef.current.cube) {
+      cubeData.forEach((c, i) => cubeRef.current!.setColorAt(i, c.color));
+      if (cubeRef.current.instanceColor) cubeRef.current.instanceColor.needsUpdate = true;
+      colorsSetRef.current.cube = true;
+    }
+    if (icoRef.current && !colorsSetRef.current.ico) {
+      icoData.forEach((c, i) => icoRef.current!.setColorAt(i, c.color));
+      if (icoRef.current.instanceColor) icoRef.current.instanceColor.needsUpdate = true;
+      colorsSetRef.current.ico = true;
+    }
+  }, [cubeData, icoData]);
 
   useFrame((_, delta) => {
     timeRef.current += delta;
+    const progress = transitionRef.current.progress;
     
     if (cubeRef.current) {
       cubeData.forEach((cube, i) => {
-        const pos = cubePositionsRef.current[i];
-        dummy.position.set(pos[0], pos[1], pos[2]);
+        const p = Math.max(0, Math.min(1, progress * 1.3 - cube.delay * 0.3));
+        const smooth = p * p * (3 - 2 * p);
+        
+        dummy.position.set(
+          cube.treePosition[0] + (cube.galaxyPosition[0] - cube.treePosition[0]) * smooth,
+          cube.treePosition[1] + (cube.galaxyPosition[1] - cube.treePosition[1]) * smooth,
+          cube.treePosition[2] + (cube.galaxyPosition[2] - cube.treePosition[2]) * smooth
+        );
         dummy.rotation.x = timeRef.current * cube.rotSpeed;
         dummy.rotation.y = timeRef.current * cube.rotSpeed * 1.3;
         dummy.scale.setScalar(cube.scale);
         dummy.updateMatrix();
         cubeRef.current!.setMatrixAt(i, dummy.matrix);
-        cubeRef.current!.setColorAt(i, cube.color);
       });
       cubeRef.current.instanceMatrix.needsUpdate = true;
-      if (cubeRef.current.instanceColor) cubeRef.current.instanceColor.needsUpdate = true;
     }
     
     if (icoRef.current) {
       icoData.forEach((ico, i) => {
-        const pos = icoPositionsRef.current[i];
-        dummy.position.set(pos[0], pos[1], pos[2]);
+        const p = Math.max(0, Math.min(1, progress * 1.3 - ico.delay * 0.3));
+        const smooth = p * p * (3 - 2 * p);
+        
+        dummy.position.set(
+          ico.treePosition[0] + (ico.galaxyPosition[0] - ico.treePosition[0]) * smooth,
+          ico.treePosition[1] + (ico.galaxyPosition[1] - ico.treePosition[1]) * smooth,
+          ico.treePosition[2] + (ico.galaxyPosition[2] - ico.treePosition[2]) * smooth
+        );
         dummy.rotation.x = timeRef.current * ico.rotSpeed * 0.7;
         dummy.rotation.z = timeRef.current * ico.rotSpeed;
         dummy.scale.setScalar(ico.scale);
         dummy.updateMatrix();
         icoRef.current!.setMatrixAt(i, dummy.matrix);
-        icoRef.current!.setColorAt(i, ico.color);
       });
       icoRef.current.instanceMatrix.needsUpdate = true;
-      if (icoRef.current.instanceColor) icoRef.current.instanceColor.needsUpdate = true;
     }
   });
 
@@ -356,12 +373,15 @@ export function GemOrnaments({ state }: { state: TreeState }) {
   );
 }
 
-// Tetrahedron spiral ribbon (minimalist, elegant) - 3 loops around tree
+// Tetrahedron spiral ribbon (minimalist, elegant) - OPTIMIZED
 export function TetrahedronSpiral({ state }: { state: TreeState }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const timeRef = useRef(0);
-  const tetraCount = 180; // More tetrahedrons for smoother spiral
+  const colorsSetRef = useRef(false);
+  const transitionRef = useRef({ progress: 0 });
+  const tetraCount = 180;
+  const whiteColor = useMemo(() => new THREE.Color('#ffffff'), []);
   
   const tetraData = useMemo(() => {
     return Array.from({ length: tetraCount }, (_, i) => {
@@ -369,66 +389,56 @@ export function TetrahedronSpiral({ state }: { state: TreeState }) {
       const maxRadius = 3.0;
       const t = i / tetraCount;
       const y = t * height - height / 2 + 0.3;
-      const layerRadius = maxRadius * (1 - t * 0.88) + 0.15; // Slightly offset from tree surface
-      const angle = t * Math.PI * 6; // 3 full spirals
-      
-      const treePos: [number, number, number] = [
-        Math.cos(angle) * layerRadius,
-        y,
-        Math.sin(angle) * layerRadius,
-      ];
-      const galaxyPos = generateGalaxyPosition();
+      const layerRadius = maxRadius * (1 - t * 0.88) + 0.15;
+      const angle = t * Math.PI * 6;
       
       return {
-        treePosition: treePos,
-        galaxyPosition: galaxyPos,
+        treePosition: [Math.cos(angle) * layerRadius, y, Math.sin(angle) * layerRadius] as [number, number, number],
+        galaxyPosition: generateGalaxyPosition(),
         angle,
-        phase: Math.random() * Math.PI * 2,
+        delay: i / tetraCount, // Sequential delay based on position
       };
     });
   }, []);
 
-  const positionsRef = useRef(tetraData.map(p => [...p.treePosition]));
-
   useEffect(() => {
-    const targetPositions = state === 'tree' 
-      ? tetraData.map(p => p.treePosition)
-      : tetraData.map(p => p.galaxyPosition);
+    gsap.to(transitionRef.current, { progress: state === 'tree' ? 0 : 1, duration: 1.5, ease: 'power2.inOut' });
+  }, [state]);
 
-    positionsRef.current.forEach((pos, i) => {
-      gsap.to(pos, {
-        0: targetPositions[i][0],
-        1: targetPositions[i][1],
-        2: targetPositions[i][2],
-        duration: 1.3 + Math.random() * 0.4,
-        ease: 'power2.inOut',
-        delay: i * 0.005, // Sequential delay for wave effect
-      });
-    });
-  }, [state, tetraData]);
+  // Set colors once
+  useEffect(() => {
+    if (!meshRef.current || colorsSetRef.current) return;
+    tetraData.forEach((_, i) => meshRef.current!.setColorAt(i, whiteColor));
+    if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
+    colorsSetRef.current = true;
+  }, [tetraData, whiteColor]);
 
   useFrame((_, delta) => {
     if (!meshRef.current) return;
     
     timeRef.current += delta;
-    const white = new THREE.Color('#ffffff');
+    const progress = transitionRef.current.progress;
     
     tetraData.forEach((tetra, i) => {
-      const pos = positionsRef.current[i];
+      // Wave effect: particles at top transition earlier
+      const p = Math.max(0, Math.min(1, progress * 1.5 - tetra.delay * 0.5));
+      const smooth = p * p * (3 - 2 * p);
       
-      dummy.position.set(pos[0], pos[1], pos[2]);
+      dummy.position.set(
+        tetra.treePosition[0] + (tetra.galaxyPosition[0] - tetra.treePosition[0]) * smooth,
+        tetra.treePosition[1] + (tetra.galaxyPosition[1] - tetra.treePosition[1]) * smooth,
+        tetra.treePosition[2] + (tetra.galaxyPosition[2] - tetra.treePosition[2]) * smooth
+      );
       dummy.rotation.y = tetra.angle + timeRef.current * 0.2;
       dummy.rotation.x = Math.PI * 0.15;
       dummy.rotation.z = tetra.angle * 0.5;
-      dummy.scale.setScalar(0.06); // Visible but elegant size
+      dummy.scale.setScalar(0.06);
       
       dummy.updateMatrix();
       meshRef.current!.setMatrixAt(i, dummy.matrix);
-      meshRef.current!.setColorAt(i, white);
     });
     
     meshRef.current.instanceMatrix.needsUpdate = true;
-    if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
   });
 
   return (

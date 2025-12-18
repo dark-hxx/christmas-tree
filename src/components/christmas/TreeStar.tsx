@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TreeState } from '@/types/christmas';
@@ -28,12 +28,19 @@ function createStarShape(outerRadius: number, innerRadius: number): THREE.Shape 
   return shape;
 }
 
-// Sparkle particles around the star
+// Sparkle particles around the star - OPTIMIZED
 function StarSparkles({ visible }: { visible: boolean }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const timeRef = useRef(0);
+  const colorsSetRef = useRef(false);
   const sparkleCount = 30;
+  
+  // Pre-create colors
+  const colors = useMemo(() => ({
+    gold: new THREE.Color('#ffd700'),
+    white: new THREE.Color('#ffffff'),
+  }), []);
   
   const sparkleData = useMemo(() => {
     return Array.from({ length: sparkleCount }, (_, i) => ({
@@ -43,15 +50,24 @@ function StarSparkles({ visible }: { visible: boolean }) {
       phase: Math.random() * Math.PI * 2,
       yOffset: (Math.random() - 0.5) * 0.6,
       scale: 0.02 + Math.random() * 0.03,
+      isWhite: i % 3 === 0,
     }));
   }, []);
+
+  // Set colors once
+  useEffect(() => {
+    if (!meshRef.current || colorsSetRef.current) return;
+    sparkleData.forEach((sparkle, i) => {
+      meshRef.current!.setColorAt(i, sparkle.isWhite ? colors.white : colors.gold);
+    });
+    if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
+    colorsSetRef.current = true;
+  }, [sparkleData, colors]);
 
   useFrame((_, delta) => {
     if (!meshRef.current || !visible) return;
     
     timeRef.current += delta;
-    const gold = new THREE.Color('#ffd700');
-    const white = new THREE.Color('#ffffff');
     
     sparkleData.forEach((sparkle, i) => {
       const t = timeRef.current * sparkle.speed + sparkle.phase;
@@ -70,13 +86,9 @@ function StarSparkles({ visible }: { visible: boolean }) {
       
       dummy.updateMatrix();
       meshRef.current!.setMatrixAt(i, dummy.matrix);
-      
-      const color = i % 3 === 0 ? white : gold;
-      meshRef.current!.setColorAt(i, color);
     });
     
     meshRef.current.instanceMatrix.needsUpdate = true;
-    if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
   });
 
   return (
