@@ -162,32 +162,72 @@ export function useHandGesture({ enabled, onGestureChange }: UseHandGestureOptio
         // Request camera access
         setStatus('requesting-camera');
         console.log('[Gesture] Requesting camera...');
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { ideal: 640 },
-            height: { ideal: 480 },
-            facingMode: 'user'
-          }
-        });
+        console.log('[Gesture] User Agent:', navigator.userAgent);
+        
+        // Check if getUserMedia is supported
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error('getUserMedia not supported on this device/browser');
+        }
+
+        // Use more relaxed constraints for Android compatibility
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        console.log('[Gesture] Is Android:', isAndroid);
+        
+        const constraints = {
+          video: isAndroid 
+            ? { facingMode: 'user' } // Simpler constraints for Android
+            : { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+        };
+        
+        console.log('[Gesture] Camera constraints:', JSON.stringify(constraints));
+        
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+          console.log('[Gesture] Camera stream obtained, tracks:', stream.getVideoTracks().length);
+          stream.getVideoTracks().forEach(track => {
+            console.log('[Gesture] Video track settings:', JSON.stringify(track.getSettings()));
+          });
+        } catch (camError) {
+          console.error('[Gesture] Camera error:', camError);
+          throw new Error('Camera access failed: ' + (camError as Error).message);
+        }
 
         if (!mounted) {
           stream.getTracks().forEach(t => t.stop());
           return;
         }
 
-        // Create video element
+        // Create video element with Android-compatible attributes
         const video = document.createElement('video');
         video.style.display = 'none';
         video.setAttribute('playsinline', 'true');
+        video.setAttribute('webkit-playsinline', 'true'); // iOS/Android WebKit
         video.setAttribute('autoplay', 'true');
+        video.setAttribute('muted', 'true');
         video.muted = true;
+        video.playsInline = true;
         video.srcObject = stream;
         document.body.appendChild(video);
         videoRef.current = video;
 
-        await video.play();
+        console.log('[Gesture] Video element created, attempting to play...');
+        
+        try {
+          await video.play();
+        } catch (playError) {
+          console.error('[Gesture] Video play error:', playError);
+          throw new Error('Video playback failed: ' + (playError as Error).message);
+        }
+        
+        // Wait for video to have actual dimensions
+        let retries = 0;
+        while ((video.videoWidth === 0 || video.videoHeight === 0) && retries < 30) {
+          await new Promise(r => setTimeout(r, 100));
+          retries++;
+        }
+        
         setStatus('initializing-hands');
-        console.log('[Gesture] Video playing, dimensions:', video.videoWidth, 'x', video.videoHeight);
+        console.log('[Gesture] Video playing, dimensions:', video.videoWidth, 'x', video.videoHeight, 'readyState:', video.readyState);
 
         // Initialize Hands
         const hands = new Hands({
