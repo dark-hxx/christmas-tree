@@ -131,20 +131,26 @@ function PhotoCardMesh({
 
     const targetScale = isFocused ? 5 : 0.4;  // 更大的缩放
 
+    // 使用更丝滑的动画设置
+    gsap.killTweensOf(meshRef.current.position);
+    gsap.killTweensOf(meshRef.current.scale);
+
     gsap.to(meshRef.current.position, {
       x: targetPos[0],
       y: targetPos[1],
       z: targetPos[2],
-      duration: 1,
-      ease: 'power2.inOut',
+      duration: isFocused ? 0.6 : 0.8,
+      ease: 'power3.out',  // 更自然的缓动
+      overwrite: true,
     });
 
     gsap.to(meshRef.current.scale, {
       x: targetScale,
       y: targetScale,
       z: 1,
-      duration: 0.8,
-      ease: 'power2.inOut',
+      duration: isFocused ? 0.5 : 0.7,
+      ease: 'back.out(1.2)',  // 带轻微弹性的缓动
+      overwrite: true,
     });
   }, [state, isFocused, treePosition, galaxyPosition]);
 
