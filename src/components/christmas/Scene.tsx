@@ -74,21 +74,35 @@ function SceneContent({
         handPosition={handPosition}
       />
       
-      {/* Ambient lighting */}
-      <ambientLight intensity={0.2} />
+      {/* Environment for reflections */}
+      <Environment preset="city" />
       
-      {/* Main directional light */}
-      <directionalLight 
-        position={[5, 10, 5]} 
-        intensity={0.8}
-        color="#fff5e6"
+      {/* Ambient lighting - subtle */}
+      <ambientLight intensity={0.15} />
+      
+      {/* Main spotlight from top */}
+      <spotLight 
+        position={[0, 12, 5]} 
+        angle={0.5}
+        penumbra={0.8}
+        intensity={2}
+        color="#fff8e8"
+        castShadow
       />
       
-      {/* Colored accent lights - red and green theme */}
-      <pointLight position={[-5, 3, -5]} intensity={0.8} color="#ff2222" />
-      <pointLight position={[5, 3, 5]} intensity={0.8} color="#22ff44" />
-      <pointLight position={[0, 6, 0]} intensity={0.6} color="#ffdd00" />
-      <pointLight position={[0, -2, 0]} intensity={0.4} color="#00ff66" />
+      {/* Secondary spotlight */}
+      <spotLight 
+        position={[-5, 8, -3]} 
+        angle={0.4}
+        penumbra={0.6}
+        intensity={1.2}
+        color="#ffccaa"
+      />
+      
+      {/* Bottom ground lights - simulating floor uplighting */}
+      <pointLight position={[0, -3, 0]} intensity={1.5} color="#ff6633" distance={10} />
+      <pointLight position={[-3, -2.5, 2]} intensity={0.8} color="#22ff66" distance={8} />
+      <pointLight position={[3, -2.5, -2]} intensity={0.8} color="#ff2244" distance={8} />
       
       {/* Background stars */}
       <Stars 
