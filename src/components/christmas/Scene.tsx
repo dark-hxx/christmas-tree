@@ -82,32 +82,20 @@ function SceneContent({
         Use enhanced lighting instead for reflections.
       */}
       
-      {/* Ambient lighting - subtle */}
-      <ambientLight intensity={0.15} />
+      {/* Simplified lighting - fewer point lights for better performance */}
+      <ambientLight intensity={0.2} />
       
-      {/* Main spotlight from top */}
+      {/* Single main spotlight */}
       <spotLight 
         position={[0, 12, 5]} 
-        angle={0.5}
+        angle={0.6}
         penumbra={0.8}
-        intensity={2}
+        intensity={2.5}
         color="#fff8e8"
-        castShadow
       />
       
-      {/* Secondary spotlight */}
-      <spotLight 
-        position={[-5, 8, -3]} 
-        angle={0.4}
-        penumbra={0.6}
-        intensity={1.2}
-        color="#ffccaa"
-      />
-      
-      {/* Bottom ground lights - simulating floor uplighting */}
-      <pointLight position={[0, -3, 0]} intensity={1.5} color="#ff6633" distance={10} />
-      <pointLight position={[-3, -2.5, 2]} intensity={0.8} color="#22ff66" distance={8} />
-      <pointLight position={[3, -2.5, -2]} intensity={0.8} color="#ff2244" distance={8} />
+      {/* Single colored accent light */}
+      <pointLight position={[0, -2, 0]} intensity={1.2} color="#ff6633" distance={12} />
       
       {/* Background stars - reduced count for performance */}
       <Stars 
@@ -187,10 +175,13 @@ export function ChristmasScene({
     <Canvas
       camera={{ position: [0, 2, 12], fov: 60 }}
       gl={{ 
-        antialias: true,
+        antialias: false,
         alpha: false,
         powerPreference: 'high-performance',
+        stencil: false,
+        depth: true,
       }}
+      dpr={[1, 1.5]}
       style={{ background: 'linear-gradient(180deg, #0a1628 0%, #1a0a28 50%, #0a1628 100%)' }}
     >
       <color attach="background" args={['#0a1628']} />

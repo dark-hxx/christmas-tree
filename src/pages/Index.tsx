@@ -23,7 +23,7 @@ const Index = () => {
   const [cameraPermission, setCameraPermission] = useState<'prompt' | 'granted' | 'denied' | 'requesting'>('prompt');
   const [showInstructions, setShowInstructions] = useState(true);
 
-  // Simulate loading progress
+  // Simulate loading progress - slower interval
   useEffect(() => {
     const interval = setInterval(() => {
       setLoadingProgress(prev => {
@@ -31,9 +31,9 @@ const Index = () => {
           clearInterval(interval);
           return prev;
         }
-        return prev + Math.random() * 15;
+        return prev + Math.random() * 20;
       });
-    }, 200);
+    }, 300);
     return () => clearInterval(interval);
   }, []);
 

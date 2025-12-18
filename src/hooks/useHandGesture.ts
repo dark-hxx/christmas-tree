@@ -299,13 +299,14 @@ export function useHandGesture({ enabled, onGestureChange }: UseHandGestureOptio
         setStatus('processing-frames');
         console.log('[Gesture] MediaPipe Hands initialized');
 
-        // Use requestAnimationFrame instead of MediaPipe Camera
+        // Use requestAnimationFrame with throttling
         let lastTime = 0;
+        let frameSkip = 0;
         const processFrame = async (currentTime: number) => {
           if (!mounted || !handsRef.current || !videoRef.current) return;
           
-          // Process at ~30fps
-          if (currentTime - lastTime > 33) {
+          // Process at ~15fps for better performance (every 66ms)
+          if (currentTime - lastTime > 66) {
             lastTime = currentTime;
             try {
               if (videoRef.current.readyState >= 2) {

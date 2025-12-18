@@ -42,12 +42,7 @@ export function useMouseFallback({
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!enabled) return;
 
-    // Update mouse position for hover effects
-    setMousePosition({
-      x: e.clientX / window.innerWidth,
-      y: e.clientY / window.innerHeight,
-    });
-
+    // Only update dragging - remove unnecessary mouse position tracking
     if (isDragging && currentState === 'galaxy') {
       const deltaX = (e.clientX - dragStartRef.current.x) * 0.005;
       const deltaY = (e.clientY - dragStartRef.current.y) * 0.005;
