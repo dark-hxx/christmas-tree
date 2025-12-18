@@ -105,21 +105,34 @@ export function ParticleSystem({ state, particleCount = 8000 }: ParticleSystemPr
       positions[i * 3 + 1] = treePos[1];
       positions[i * 3 + 2] = treePos[2];
       
-      // 85% green, 15% white sparkles
+      // 70% green, 15% gold, 10% white sparkles, 5% red
       const colorRand = Math.random();
-      if (colorRand < 0.85) {
-        const hue = 0.33 + Math.random() * 0.05;
-        const saturation = 0.7 + Math.random() * 0.3;
-        const lightness = 0.25 + Math.random() * 0.2;
-        const color = new THREE.Color().setHSL(hue, saturation, lightness);
-        colors[i * 3] = color.r;
-        colors[i * 3 + 1] = color.g;
-        colors[i * 3 + 2] = color.b;
+      let color: THREE.Color;
+      if (colorRand < 0.70) {
+        // Vibrant green tones
+        const hue = 0.30 + Math.random() * 0.08;
+        const saturation = 0.8 + Math.random() * 0.2;
+        const lightness = 0.35 + Math.random() * 0.25;
+        color = new THREE.Color().setHSL(hue, saturation, lightness);
+      } else if (colorRand < 0.85) {
+        // Golden highlights
+        const hue = 0.12 + Math.random() * 0.04;
+        const saturation = 0.9 + Math.random() * 0.1;
+        const lightness = 0.5 + Math.random() * 0.2;
+        color = new THREE.Color().setHSL(hue, saturation, lightness);
+      } else if (colorRand < 0.95) {
+        // White/silver sparkles
+        color = new THREE.Color().setHSL(0, 0, 0.9 + Math.random() * 0.1);
       } else {
-        colors[i * 3] = 0.95;
-        colors[i * 3 + 1] = 0.95;
-        colors[i * 3 + 2] = 0.95;
+        // Red accents
+        const hue = 0.0 + Math.random() * 0.02;
+        const saturation = 0.9;
+        const lightness = 0.45 + Math.random() * 0.1;
+        color = new THREE.Color().setHSL(hue, saturation, lightness);
       }
+      colors[i * 3] = color.r;
+      colors[i * 3 + 1] = color.g;
+      colors[i * 3 + 2] = color.b;
       
       data.push({
         treePos,
@@ -218,10 +231,10 @@ export function ParticleSystem({ state, particleCount = 8000 }: ParticleSystemPr
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.04}
+        size={0.05}
         vertexColors
         transparent
-        opacity={0.9}
+        opacity={0.95}
         sizeAttenuation
         toneMapped={false}
       />
@@ -306,10 +319,13 @@ export function OrnamentBalls({ state }: { state: TreeState }) {
 
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, ornamentCount]}>
-      <sphereGeometry args={[1, 8, 8]} />
-      <meshBasicMaterial 
-        color="#ff3333"
-        toneMapped={false}
+      <sphereGeometry args={[1, 12, 12]} />
+      <meshStandardMaterial 
+        color="#cc2233"
+        emissive="#ff4444"
+        emissiveIntensity={0.5}
+        metalness={0.8}
+        roughness={0.2}
       />
     </instancedMesh>
   );
@@ -436,11 +452,23 @@ export function GemOrnaments({ state }: { state: TreeState }) {
     <>
       <instancedMesh ref={cubeRef} args={[undefined, undefined, cubeCount]}>
         <boxGeometry args={[1, 1, 1]} />
-        <meshBasicMaterial color="#f8f8ff" toneMapped={false} />
+        <meshStandardMaterial 
+          color="#ffffff"
+          emissive="#aaddff"
+          emissiveIntensity={0.8}
+          metalness={0.9}
+          roughness={0.1}
+        />
       </instancedMesh>
       <instancedMesh ref={icoRef} args={[undefined, undefined, icoCount]}>
         <icosahedronGeometry args={[1, 0]} />
-        <meshBasicMaterial color="#f8f8ff" toneMapped={false} />
+        <meshStandardMaterial 
+          color="#ffffff"
+          emissive="#ffccdd"
+          emissiveIntensity={0.8}
+          metalness={0.9}
+          roughness={0.1}
+        />
       </instancedMesh>
     </>
   );
@@ -534,7 +562,13 @@ export function TetrahedronSpiral({ state }: { state: TreeState }) {
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, tetraCount]}>
       <tetrahedronGeometry args={[1, 0]} />
-      <meshBasicMaterial color="#ffffee" toneMapped={false} />
+      <meshStandardMaterial 
+        color="#ffffff"
+        emissive="#ffffaa"
+        emissiveIntensity={1}
+        metalness={0.8}
+        roughness={0.15}
+      />
     </instancedMesh>
   );
 }
