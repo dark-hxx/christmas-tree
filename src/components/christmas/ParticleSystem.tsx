@@ -78,7 +78,7 @@ function generateRibbonPosition(index: number, total: number): [number, number, 
 }
 
 // Main tree particles using THREE.Points for maximum performance
-export function ParticleSystem({ state, particleCount = 10000 }: ParticleSystemProps) {
+export function ParticleSystem({ state, particleCount = 15000 }: ParticleSystemProps) {
   const pointsRef = useRef<THREE.Points>(null);
   const timeRef = useRef(0);
   const transitionRef = useRef({ progress: 0 });
