@@ -3,7 +3,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars, Environment } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
-import { ParticleSystem } from './ParticleSystem';
+import { ParticleSystem, OrnamentBalls, RibbonGarland } from './ParticleSystem';
 import { PhotoCards } from './PhotoCards';
 import { TreeStar } from './TreeStar';
 import { TreeState } from '@/types/christmas';
@@ -102,7 +102,13 @@ function SceneContent({
       />
       
       {/* Main particle system */}
-      <ParticleSystem state={state} particleCount={2500} />
+      <ParticleSystem state={state} particleCount={4000} />
+      
+      {/* Ornament balls */}
+      <OrnamentBalls state={state} />
+      
+      {/* Golden ribbon garland */}
+      <RibbonGarland state={state} />
       
       {/* Photo cards */}
       <PhotoCards 
