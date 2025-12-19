@@ -28,32 +28,73 @@ function CameraController({
   const { camera } = useThree();
   const targetRef = useRef(new THREE.Vector3(0, 0, 0));
   const positionRef = useRef(new THREE.Vector3(0, 2, 12));
-  const velocityRef = useRef(new THREE.Vector3(0, 0, 0));
+  const ribbonTimeRef = useRef(0);
+  const prevStateRef = useRef<TreeState>(state);
+  const transitionDelayRef = useRef(0);
 
   useFrame((_, delta) => {
+    // Detect state change to tree (pinch gesture completed)
+    if (state === 'tree' && prevStateRef.current !== 'tree') {
+      // Wait for tree to assemble before starting ribbon follow
+      transitionDelayRef.current = 2.0; // 2 second delay for assembly
+      ribbonTimeRef.current = 0;
+    }
+    prevStateRef.current = state;
+
+    // Handle transition delay
+    if (transitionDelayRef.current > 0) {
+      transitionDelayRef.current -= delta;
+    }
+
     // Base camera distance
     const baseDistance = state === 'tree' ? 12 : 18;
     
-    // Calculate target position based on hand or orbit
     let targetX = 0;
     let targetY = 2;
+    let targetZ = baseDistance;
+    let lookAtY = 0;
     
-    if (handPosition && state === 'galaxy') {
+    if (state === 'tree' && transitionDelayRef.current <= 0) {
+      // Ribbon follow mode - camera spirals from bottom to top following the ribbon
+      ribbonTimeRef.current += delta * 0.15; // Speed of spiral
+      
+      // Loop the ribbon time (0 to 1 represents bottom to top)
+      const t = (ribbonTimeRef.current % 1);
+      
+      // Match ribbon spiral parameters from TetrahedronSpiral
+      const height = 7;
+      const maxRadius = 3.0;
+      const ribbonY = t * height - height / 2 + 0.3;
+      const layerRadius = maxRadius * (1 - t * 0.88) + 0.15;
+      const angle = t * Math.PI * 6; // 3 full spirals
+      
+      // Position camera outside the ribbon, looking at the ribbon point
+      const cameraDistance = 5 + layerRadius * 1.5;
+      const cameraAngle = angle + Math.PI * 0.3; // Slightly ahead of ribbon
+      
+      targetX = Math.cos(cameraAngle) * cameraDistance;
+      targetY = ribbonY + 1.5; // Slightly above the ribbon point
+      targetZ = Math.sin(cameraAngle) * cameraDistance;
+      lookAtY = ribbonY;
+    } else if (handPosition && state === 'galaxy') {
       targetX = (handPosition.x - 0.5) * 20;
       targetY = (0.5 - handPosition.y) * 10 + 2;
+      targetZ = Math.cos(orbitRotation.y) * baseDistance;
     } else {
       targetX = Math.sin(orbitRotation.y) * baseDistance;
       targetY = Math.sin(orbitRotation.x) * 5 + 2;
+      targetZ = Math.cos(orbitRotation.y) * baseDistance;
     }
     
-    const targetZ = Math.cos(orbitRotation.y) * baseDistance;
-    
-    // Frame-rate independent smooth camera movement using exponential decay
-    const smoothFactor = 1 - Math.exp(-4 * delta); // ~4 is the speed factor
+    // Frame-rate independent smooth camera movement
+    const smoothFactor = 1 - Math.exp(-3 * delta);
     
     positionRef.current.x += (targetX - positionRef.current.x) * smoothFactor;
     positionRef.current.y += (targetY - positionRef.current.y) * smoothFactor;
     positionRef.current.z += (targetZ - positionRef.current.z) * smoothFactor;
+    
+    // Smooth look-at target
+    targetRef.current.y += (lookAtY - targetRef.current.y) * smoothFactor;
     
     camera.position.copy(positionRef.current);
     camera.lookAt(targetRef.current);
