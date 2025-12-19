@@ -24,7 +24,7 @@ const Index = () => {
   const [orbitRotation, setOrbitRotation] = useState({ x: 0, y: 0 });
   const [cameraPermission, setCameraPermission] = useState<'prompt' | 'granted' | 'denied' | 'requesting'>('prompt');
   const [showInstructions, setShowInstructions] = useState(true);
-  const [customText, setCustomText] = useState('🎄 Merry Christmas 🎄');
+  const [customText, setCustomText] = useState('圣诞快乐');
   const [isStarFocused, setIsStarFocused] = useState(false);
   
   // Use refs for values accessed in callbacks to prevent re-renders
