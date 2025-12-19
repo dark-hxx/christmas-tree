@@ -36,6 +36,10 @@ function CameraController({
   const prevStateRef = useRef<TreeState>(state);
   const transitionDelayRef = useRef(0);
   const isAtStarRef = useRef(false);
+  
+  // Physics-based smooth rotation
+  const velocityRef = useRef(0);
+  const targetVelocityRef = useRef(0.15); // Target rotation speed
 
   useFrame((_, delta) => {
     // Detect state change to tree (pinch gesture completed)
@@ -44,6 +48,7 @@ function CameraController({
       transitionDelayRef.current = 2.0; // 2 second delay for assembly
       ribbonTimeRef.current = 0;
       isAtStarRef.current = false;
+      velocityRef.current = 0; // Reset velocity for smooth start
       onStarFocused?.(false);
     }
     
@@ -69,8 +74,21 @@ function CameraController({
     
     if (state === 'tree' && transitionDelayRef.current <= 0) {
       if (!isAtStarRef.current) {
-        // Ribbon follow mode - camera spirals from bottom to top following the ribbon
-        ribbonTimeRef.current += delta * 0.15; // Speed of spiral
+        // Physics-based smooth rotation with easing
+        const t = ribbonTimeRef.current;
+        
+        // Dynamic target velocity: fast in middle, slow at start and end
+        const easeFactor = Math.sin(t * Math.PI); // 0 at start/end, 1 in middle
+        const baseVelocity = 0.12;
+        const maxVelocity = 0.22;
+        targetVelocityRef.current = baseVelocity + easeFactor * (maxVelocity - baseVelocity);
+        
+        // Smooth acceleration/deceleration (spring-like physics)
+        const acceleration = 2.5; // How fast velocity changes
+        velocityRef.current += (targetVelocityRef.current - velocityRef.current) * acceleration * delta;
+        
+        // Apply velocity with smooth damping
+        ribbonTimeRef.current += velocityRef.current * delta;
         
         // Check if reached the top (t >= 1)
         if (ribbonTimeRef.current >= 1) {
@@ -78,15 +96,14 @@ function CameraController({
           onStarFocused?.(true);
           ribbonTimeRef.current = 1;
         }
-        
-        const t = Math.min(ribbonTimeRef.current, 1);
+        const tClamped = Math.min(ribbonTimeRef.current, 1);
         
         // Match ribbon spiral parameters from TetrahedronSpiral
         const height = 7;
         const maxRadius = 3.0;
-        const ribbonY = t * height - height / 2 + 0.3;
-        const layerRadius = maxRadius * (1 - t * 0.88) + 0.15;
-        const angle = t * Math.PI * 6; // 3 full spirals
+        const ribbonY = tClamped * height - height / 2 + 0.3;
+        const layerRadius = maxRadius * (1 - tClamped * 0.88) + 0.15;
+        const angle = tClamped * Math.PI * 6; // 3 full spirals
         
         // Position camera outside the ribbon, looking at the ribbon point
         const cameraDistance = 5 + layerRadius * 1.5;
