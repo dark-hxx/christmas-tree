@@ -2,98 +2,102 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Christmas Tree Design System - Cinematic & Dreamy */
+/* Christmas Tree Design System - Trump Style Luxury: Deep Emerald & Gold */
 
 @layer base {
   :root {
-    --background: 220 30% 8%;
-    --foreground: 45 20% 95%;
+    /* Deep emerald background with luxury feel */
+    --background: 160 40% 6%;
+    --foreground: 45 60% 92%;
 
-    --card: 220 25% 12%;
-    --card-foreground: 45 20% 95%;
+    --card: 160 35% 10%;
+    --card-foreground: 45 60% 92%;
 
-    --popover: 220 25% 12%;
-    --popover-foreground: 45 20% 95%;
+    --popover: 160 35% 10%;
+    --popover-foreground: 45 60% 92%;
 
-    --primary: 130 50% 25%;
-    --primary-foreground: 45 20% 95%;
+    /* Deep emerald green primary */
+    --primary: 155 55% 18%;
+    --primary-foreground: 45 70% 90%;
 
-    --secondary: 45 80% 55%;
-    --secondary-foreground: 220 30% 8%;
+    /* Luxury gold secondary */
+    --secondary: 43 90% 55%;
+    --secondary-foreground: 160 40% 6%;
 
-    --muted: 220 20% 18%;
-    --muted-foreground: 220 10% 60%;
+    --muted: 160 25% 15%;
+    --muted-foreground: 160 15% 55%;
 
-    --accent: 0 70% 45%;
-    --accent-foreground: 45 20% 95%;
+    /* Rich accent */
+    --accent: 43 100% 50%;
+    --accent-foreground: 160 40% 6%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 20% 20%;
-    --input: 220 20% 20%;
-    --ring: 45 80% 55%;
+    --border: 160 25% 18%;
+    --input: 160 25% 18%;
+    --ring: 43 90% 55%;
 
     --radius: 0.75rem;
 
-    /* Christmas specific colors */
-    --christmas-green: 130 50% 25%;
-    --christmas-gold: 45 80% 55%;
-    --christmas-red: 0 70% 45%;
-    --christmas-deep-blue: 220 60% 12%;
-    --christmas-snow: 200 30% 95%;
+    /* Christmas specific colors - Emerald & Gold luxury */
+    --christmas-green: 155 60% 20%;
+    --christmas-gold: 43 95% 55%;
+    --christmas-red: 355 80% 50%;
+    --christmas-deep-blue: 160 50% 8%;
+    --christmas-snow: 45 40% 95%;
     
-    /* Glow effects */
-    --glow-gold: 45 100% 60%;
-    --glow-green: 130 60% 40%;
+    /* Enhanced glow effects for cinematic bloom */
+    --glow-gold: 43 100% 65%;
+    --glow-green: 155 70% 45%;
 
-    --sidebar-background: 220 25% 10%;
-    --sidebar-foreground: 45 20% 95%;
-    --sidebar-primary: 45 80% 55%;
-    --sidebar-primary-foreground: 220 30% 8%;
-    --sidebar-accent: 220 20% 18%;
-    --sidebar-accent-foreground: 45 20% 95%;
-    --sidebar-border: 220 20% 20%;
-    --sidebar-ring: 45 80% 55%;
+    --sidebar-background: 160 35% 8%;
+    --sidebar-foreground: 45 60% 92%;
+    --sidebar-primary: 43 90% 55%;
+    --sidebar-primary-foreground: 160 40% 6%;
+    --sidebar-accent: 160 25% 15%;
+    --sidebar-accent-foreground: 45 60% 92%;
+    --sidebar-border: 160 25% 18%;
+    --sidebar-ring: 43 90% 55%;
   }
 
   .dark {
-    --background: 220 30% 8%;
-    --foreground: 45 20% 95%;
+    --background: 160 40% 6%;
+    --foreground: 45 60% 92%;
 
-    --card: 220 25% 12%;
-    --card-foreground: 45 20% 95%;
+    --card: 160 35% 10%;
+    --card-foreground: 45 60% 92%;
 
-    --popover: 220 25% 12%;
-    --popover-foreground: 45 20% 95%;
+    --popover: 160 35% 10%;
+    --popover-foreground: 45 60% 92%;
 
-    --primary: 130 50% 25%;
-    --primary-foreground: 45 20% 95%;
+    --primary: 155 55% 18%;
+    --primary-foreground: 45 70% 90%;
 
-    --secondary: 45 80% 55%;
-    --secondary-foreground: 220 30% 8%;
+    --secondary: 43 90% 55%;
+    --secondary-foreground: 160 40% 6%;
 
-    --muted: 220 20% 18%;
-    --muted-foreground: 220 10% 60%;
+    --muted: 160 25% 15%;
+    --muted-foreground: 160 15% 55%;
 
-    --accent: 0 70% 45%;
-    --accent-foreground: 45 20% 95%;
+    --accent: 43 100% 50%;
+    --accent-foreground: 160 40% 6%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 20% 20%;
-    --input: 220 20% 20%;
-    --ring: 45 80% 55%;
+    --border: 160 25% 18%;
+    --input: 160 25% 18%;
+    --ring: 43 90% 55%;
 
-    --sidebar-background: 220 25% 10%;
-    --sidebar-foreground: 45 20% 95%;
-    --sidebar-primary: 45 80% 55%;
-    --sidebar-primary-foreground: 220 30% 8%;
-    --sidebar-accent: 220 20% 18%;
-    --sidebar-accent-foreground: 45 20% 95%;
-    --sidebar-border: 220 20% 20%;
-    --sidebar-ring: 45 80% 55%;
+    --sidebar-background: 160 35% 8%;
+    --sidebar-foreground: 45 60% 92%;
+    --sidebar-primary: 43 90% 55%;
+    --sidebar-primary-foreground: 160 40% 6%;
+    --sidebar-accent: 160 25% 15%;
+    --sidebar-accent-foreground: 45 60% 92%;
+    --sidebar-border: 160 25% 18%;
+    --sidebar-ring: 43 90% 55%;
   }
 }
 
@@ -104,13 +108,20 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Times New Roman', Times, serif;
+  }
+
+  /* Cinzel for headings and display text */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
   }
 }
 
 /* Custom animations for Christmas tree */
 @keyframes pulse-glow {
   0%, 100% { opacity: 0.8; filter: brightness(1); }
-  50% { opacity: 1; filter: brightness(1.3); }
+  50% { opacity: 1; filter: brightness(1.5); }
 }
 
 @keyframes float {
@@ -121,6 +132,11 @@
 @keyframes sparkle {
   0%, 100% { opacity: 0.4; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes luxury-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
 
 .animate-pulse-glow {
@@ -135,15 +151,23 @@
   animation: sparkle 2s ease-in-out infinite;
 }
 
-/* Glass morphism for UI elements */
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, hsl(var(--christmas-gold) / 0.3), transparent);
+  background-size: 200% 100%;
+  animation: luxury-shimmer 3s ease-in-out infinite;
+}
+
+/* Glass morphism for UI elements - luxury emerald style */
 .glass {
-  background: hsla(var(--card), 0.6);
-  backdrop-filter: blur(12px);
-  border: 1px solid hsla(var(--border), 0.3);
+  background: hsla(var(--card), 0.7);
+  backdrop-filter: blur(16px);
+  border: 1px solid hsla(var(--christmas-gold), 0.2);
+  box-shadow: 0 4px 30px hsla(var(--christmas-gold), 0.1);
 }
 
 .glass-gold {
-  background: hsla(var(--christmas-gold), 0.15);
-  backdrop-filter: blur(12px);
-  border: 1px solid hsla(var(--christmas-gold), 0.3);
+  background: hsla(var(--christmas-gold), 0.12);
+  backdrop-filter: blur(16px);
+  border: 1px solid hsla(var(--christmas-gold), 0.4);
+  box-shadow: 0 4px 40px hsla(var(--christmas-gold), 0.2);
 }
