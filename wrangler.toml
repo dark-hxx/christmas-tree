@@ -1,0 +1,21 @@
+name = "christmas-tree"
+compatibility_date = "2025-12-24"
+type = "static_site"
+build_command = "npm run build"
+build_output_dir = "dist"
+
+[[redirects]]
+from = "/blog/*"
+to = "/blog/index.html"
+status = 200
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
+
+[[headers]]
+for = "/*"
+[headers.values]
+X-Frame-Options = "SAMEORIGIN"
+X-Content-Type-Options = "nosniff"
